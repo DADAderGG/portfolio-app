@@ -11,209 +11,100 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   :root {
-    --bg: #ffffff; --bg2: #f5f5f7; --bg3: #ebebeb;
-    --text: #1c1c1e; --text2: #6e6e73; --text3: #aeaeb2;
-    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
-    --pos: #1D9E75; --neg: #D85A30;
-    --blue: #378ADD; --pink: #D4537E; --amber: #EF9F27; --green: #1D9E75;
-    --radius: 14px; --radius-sm: 10px;
-    --safe-top: env(safe-area-inset-top);
-    --safe-bot: env(safe-area-inset-bottom);
+    --bg:#ffffff;--bg2:#f5f5f7;--bg3:#e5e5ea;
+    --text:#1c1c1e;--text2:#6e6e73;--text3:#aeaeb2;
+    --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+    --pos:#1D9E75;--neg:#D85A30;--blue:#378ADD;
+    --radius:14px;--radius-sm:10px;
+    --safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
-      --text: #ffffff; --text2: #aeaeb2; --text3: #6e6e73;
-      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
-    }
+  @media(prefers-color-scheme:dark){
+    :root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#ffffff;--text2:#aeaeb2;--text3:#6e6e73;--border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);}
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-    background: var(--bg); color: var(--text);
-    padding-top: var(--safe-top);
-    padding-bottom: calc(var(--safe-bot) + 70px);
-  }
-  .header {
-    padding: 16px 16px 12px; border-bottom: 0.5px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; background: var(--bg); z-index: 10;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  }
-  .header h1 { font-size: 18px; font-weight: 700; }
-  .sync-btn {
-    display: flex; align-items: center; gap: 5px; padding: 7px 14px;
-    border: 0.5px solid var(--border2); border-radius: 20px;
-    background: transparent; color: var(--text2); font-size: 13px; cursor: pointer;
-  }
-  .sync-btn:disabled { opacity: 0.4; }
-  .spin { display: inline-block; animation: spin 1s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Total card */
-  .total-card {
-    margin: 14px 16px; background: var(--bg2);
-    border-radius: var(--radius); padding: 20px;
-  }
-  .total-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-  .total-amount { font-size: 34px; font-weight: 700; letter-spacing: -1px; margin-bottom: 8px; }
-  .total-row { display: flex; gap: 14px; font-size: 13px; }
-  .pos { color: var(--pos); } .neg { color: var(--neg); }
-
-  /* FX */
-  .fx-bar {
-    margin: 0 16px 12px; padding: 8px 13px; background: var(--bg2);
-    border-radius: var(--radius-sm); display: flex; gap: 6px;
-    font-size: 12px; color: var(--text2); align-items: center;
-  }
-  .fx-bar b { color: var(--text); }
-
-  /* Chart */
-  .chart-card {
-    margin: 0 16px 14px; border: 0.5px solid var(--border);
-    border-radius: var(--radius); padding: 16px;
-  }
-  .chart-card h3 { font-size: 12px; color: var(--text2); margin-bottom: 12px; font-weight: 500; }
-
-  /* Tabs */
-  .tabs {
-    display: flex; margin: 0 16px 12px; background: var(--bg2);
-    border-radius: var(--radius-sm); padding: 3px; gap: 2px;
-  }
-  .tab {
-    flex: 1; padding: 7px 4px; font-size: 12px; font-weight: 600;
-    border: none; background: transparent; color: var(--text2);
-    border-radius: 8px; cursor: pointer; transition: all .15s;
-  }
-  .tab.active {
-    background: var(--bg); color: var(--text);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-  }
-  .section { display: none; } .section.active { display: block; }
-
-  /* Asset list */
-  .asset-list { margin: 0 16px; }
-  .asset-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 13px 0; border-bottom: 0.5px solid var(--border);
-  }
-  .asset-item:last-child { border-bottom: none; }
-  .asset-icon {
-    width: 42px; height: 42px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; flex-shrink: 0;
-  }
-  .ic-stock  { background: #E6F1FB; color: #185FA5; }
-  .ic-us     { background: #FBEAF0; color: #993556; }
-  .ic-crypto { background: #FAEEDA; color: #854F0B; }
-  .ic-cash   { background: #EAF3DE; color: #3B6D11; }
-  .asset-info { flex: 1; min-width: 0; }
-  .asset-name { font-size: 14px; font-weight: 600; }
-  .asset-sub  { font-size: 11px; color: var(--text2); margin-top: 2px; }
-  .asset-right { text-align: right; flex-shrink: 0; }
-  .asset-price { font-size: 11px; color: var(--text2); margin-bottom: 1px; }
-  .asset-val   { font-size: 14px; font-weight: 600; }
-  .asset-pnl   { font-size: 11px; margin-top: 2px; }
-  .del-btn {
-    border: none; background: transparent; color: var(--text3);
-    font-size: 18px; padding: 6px; cursor: pointer; margin-left: 2px; line-height: 1;
-  }
-
-  /* Add button */
-  .btn-add {
-    display: flex; align-items: center; gap: 7px; margin: 12px 16px;
-    padding: 12px 16px; background: var(--bg2); border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text2); font-size: 13px;
-    cursor: pointer; width: calc(100% - 32px); justify-content: center; font-weight: 500;
-  }
-
-  /* Error bar */
-  .err-bar {
-    margin: 0 16px 10px; padding: 10px 13px; background: #fdecea;
-    border-radius: var(--radius-sm); font-size: 12px; color: #a32d2d; display: none;
-  }
-
-  /* Modal */
-  .modal-bg {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    display: none; align-items: flex-end; justify-content: center; z-index: 200;
-  }
-  .modal-bg.open { display: flex; }
-  .modal {
-    background: var(--bg); border-radius: 22px 22px 0 0;
-    padding: 24px 16px calc(var(--safe-bot) + 28px);
-    width: 100%; max-height: 88vh; overflow-y: auto;
-  }
-  .modal-handle {
-    width: 36px; height: 4px; background: var(--bg3);
-    border-radius: 2px; margin: 0 auto 18px;
-  }
-  .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 18px; }
-  .form-group { margin-bottom: 14px; }
-  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
-  .form-group input, .form-group select {
-    width: 100%; padding: 12px 14px; border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm); background: var(--bg2); color: var(--text);
-    font-size: 16px; -webkit-appearance: none; outline: none;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--blue); }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .btn-row { display: flex; gap: 10px; margin-top: 18px; }
-  .btn-primary {
-    flex: 1; padding: 14px; background: var(--text); color: var(--bg);
-    border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; cursor: pointer;
-  }
-  .btn-cancel {
-    padding: 14px 20px; background: transparent; border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm); font-size: 16px; cursor: pointer; color: var(--text2);
-  }
-
-  /* Edit modal fields */
-  .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
-
-  /* Nav */
-  .nav {
-    position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg);
-    border-top: 0.5px solid var(--border); display: flex;
-    padding: 8px 0 calc(var(--safe-bot) + 6px); z-index: 10;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  }
-  .nav-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    gap: 3px; padding: 4px 0; border: none; background: transparent;
-    color: var(--text3); font-size: 10px; font-weight: 500; cursor: pointer;
-  }
-  .nav-item.active { color: var(--blue); }
-  .nav-icon { font-size: 24px; line-height: 1; }
-
-  /* Install hint */
-  .install-hint {
-    margin: 0 16px 12px; padding: 11px 13px; background: #E6F1FB;
-    border-radius: var(--radius-sm); font-size: 12px; color: #185FA5;
-    line-height: 1.5; display: none;
-  }
-  .empty { text-align: center; padding: 32px 16px; color: var(--text2); font-size: 13px; }
-  .section-sum {
-    margin: 0 16px; padding: 10px 0;
-    font-size: 12px; color: var(--text2);
-    display: flex; justify-content: space-between;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .section-sum b { color: var(--text); }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:var(--bg);color:var(--text);padding-top:var(--safe-top);padding-bottom:calc(var(--safe-bot) + 72px);}
+  .header{padding:16px 16px 12px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:10;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+  .header h1{font-size:18px;font-weight:700;}
+  .header-btns{display:flex;gap:8px;}
+  .hdr-btn{display:flex;align-items:center;gap:4px;padding:7px 12px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);font-size:12px;cursor:pointer;}
+  .hdr-btn:disabled{opacity:0.4;}
+  .spin{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .total-card{margin:14px 16px;background:var(--bg2);border-radius:var(--radius);padding:20px;}
+  .total-label{font-size:12px;color:var(--text2);margin-bottom:4px;}
+  .total-amount{font-size:34px;font-weight:700;letter-spacing:-1px;margin-bottom:8px;}
+  .total-row{display:flex;gap:14px;font-size:13px;}
+  .pos{color:var(--pos);}.neg{color:var(--neg);}
+  .fx-bar{margin:0 16px 12px;padding:8px 13px;background:var(--bg2);border-radius:var(--radius-sm);display:flex;gap:6px;font-size:12px;color:var(--text2);align-items:center;justify-content:space-between;}
+  .fx-bar b{color:var(--text);}
+  .save-status{font-size:11px;color:var(--text3);}
+  .save-status.saving{color:var(--blue);}
+  .save-status.saved{color:var(--pos);}
+  .save-status.error{color:var(--neg);}
+  .chart-card{margin:0 16px 14px;border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .chart-card h3{font-size:12px;color:var(--text2);margin-bottom:12px;font-weight:500;}
+  .tabs{display:flex;margin:0 16px 12px;background:var(--bg2);border-radius:var(--radius-sm);padding:3px;gap:2px;}
+  .tab{flex:1;padding:7px 4px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--text2);border-radius:8px;cursor:pointer;transition:all .15s;}
+  .tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.12);}
+  .section{display:none;}.section.active{display:block;}
+  .section-sum{margin:0 16px;padding:10px 0;font-size:12px;color:var(--text2);display:flex;justify-content:space-between;border-bottom:0.5px solid var(--border);}
+  .section-sum b{color:var(--text);}
+  .asset-list{margin:0 16px;}
+  .asset-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:0.5px solid var(--border);}
+  .asset-item:last-child{border-bottom:none;}
+  .asset-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+  .ic-stock{background:#E6F1FB;color:#185FA5;}.ic-us{background:#FBEAF0;color:#993556;}.ic-crypto{background:#FAEEDA;color:#854F0B;}.ic-cash{background:#EAF3DE;color:#3B6D11;}
+  .asset-info{flex:1;min-width:0;}
+  .asset-name{font-size:14px;font-weight:600;}
+  .asset-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+  .asset-right{text-align:right;flex-shrink:0;}
+  .asset-price{font-size:11px;color:var(--text2);margin-bottom:1px;}
+  .asset-val{font-size:14px;font-weight:600;}
+  .asset-pnl{font-size:11px;margin-top:2px;}
+  .del-btn{border:none;background:transparent;color:var(--text3);font-size:18px;padding:6px;cursor:pointer;margin-left:2px;line-height:1;}
+  .btn-add{display:flex;align-items:center;gap:7px;margin:12px 16px;padding:12px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;cursor:pointer;width:calc(100% - 32px);justify-content:center;font-weight:500;}
+  .err-bar{margin:0 16px 10px;padding:10px 13px;background:#fdecea;border-radius:var(--radius-sm);font-size:12px;color:#a32d2d;display:none;}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:flex-end;justify-content:center;z-index:200;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--bg);border-radius:22px 22px 0 0;padding:24px 16px calc(var(--safe-bot) + 28px);width:100%;max-height:88vh;overflow-y:auto;}
+  .modal-handle{width:36px;height:4px;background:var(--bg3);border-radius:2px;margin:0 auto 18px;}
+  .modal h2{font-size:17px;font-weight:700;margin-bottom:18px;}
+  .form-group{margin-bottom:14px;}
+  .form-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;}
+  .form-group input,.form-group select{width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);font-size:16px;-webkit-appearance:none;outline:none;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--blue);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .hint{font-size:11px;color:var(--text3);margin-top:4px;}
+  .btn-row{display:flex;gap:10px;margin-top:18px;}
+  .btn-primary{flex:1;padding:14px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:600;cursor:pointer;}
+  .btn-cancel{padding:14px 20px;background:transparent;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:16px;cursor:pointer;color:var(--text2);}
+  .nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;padding:8px 0 calc(var(--safe-bot) + 6px);z-index:10;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;border:none;background:transparent;color:var(--text3);font-size:10px;font-weight:500;cursor:pointer;}
+  .nav-item.active{color:var(--blue);}
+  .nav-icon{font-size:22px;line-height:1;}
+  .empty{text-align:center;padding:32px 16px;color:var(--text2);font-size:13px;}
+  .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px;}
+  .loading-overlay p{color:var(--text2);font-size:14px;}
+  .export-btn{display:flex;align-items:center;gap:6px;margin:8px 16px 0;padding:11px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;cursor:pointer;width:calc(100% - 32px);justify-content:center;}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>📊 投資組合</h1>
-  <button class="sync-btn" id="sync-btn" onclick="syncPrices()">
-    <span id="sync-icon">↻</span>
-    <span id="sync-label">更新報價</span>
-  </button>
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div style="font-size:36px">📊</div>
+  <p>載入資料中...</p>
 </div>
 
-<div class="install-hint" id="install-hint">
-  💡 Safari → 分享按鈕 → <strong>加入主畫面</strong>，可像 App 使用！
+<div id="main-app" style="display:none">
+<div class="header">
+  <h1>📊 投資組合</h1>
+  <div class="header-btns">
+    <button class="hdr-btn" id="sync-btn" onclick="syncPrices()">
+      <span id="sync-icon">↻</span>
+      <span id="sync-label">更新</span>
+    </button>
+  </div>
 </div>
 
 <div class="total-card">
@@ -226,18 +117,15 @@
 </div>
 
 <div class="fx-bar">
-  💱 USD/TWD <b id="fx-rate">32.50</b>
-  &nbsp;·&nbsp;
-  🕐 <b id="last-time">—</b>
+  <span>💱 USD/TWD <b id="fx-rate">32.50</b> · 🕐 <b id="last-time">—</b></span>
+  <span class="save-status" id="save-status">—</span>
 </div>
 
 <div class="err-bar" id="err-bar"></div>
 
 <div class="chart-card">
   <h3>資產配置</h3>
-  <div style="position:relative;height:160px">
-    <canvas id="pie"></canvas>
-  </div>
+  <div style="position:relative;height:160px"><canvas id="pie"></canvas></div>
   <div id="pie-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:12px;color:var(--text2)"></div>
 </div>
 
@@ -249,57 +137,42 @@
 </div>
 
 <div id="sec-stocks" class="section active">
-  <div class="section-sum">
-    <span>台股/ETF 小計</span><b id="sum-stocks">NT$ 0</b>
-  </div>
+  <div class="section-sum"><span>台股/ETF 小計</span><b id="sum-stocks">NT$ 0</b></div>
   <div class="asset-list" id="list-stocks"></div>
   <button class="btn-add" onclick="openModal('stocks')">＋ 新增台股 / ETF</button>
 </div>
-
 <div id="sec-us" class="section">
-  <div class="section-sum">
-    <span>美股小計</span><b id="sum-us">$0</b>
-  </div>
+  <div class="section-sum"><span>美股小計</span><b id="sum-us">$0</b></div>
   <div class="asset-list" id="list-us"></div>
   <button class="btn-add" onclick="openModal('us')">＋ 新增美股（Firstrade）</button>
 </div>
-
 <div id="sec-crypto" class="section">
-  <div class="section-sum">
-    <span>加密貨幣小計</span><b id="sum-crypto">$0</b>
-  </div>
+  <div class="section-sum"><span>加密貨幣小計</span><b id="sum-crypto">$0</b></div>
   <div class="asset-list" id="list-crypto"></div>
   <button class="btn-add" onclick="openModal('crypto')">＋ 新增加密幣</button>
 </div>
-
 <div id="sec-cash" class="section">
-  <div class="section-sum">
-    <span>現金/存款小計</span><b id="sum-cash">NT$ 0</b>
-  </div>
+  <div class="section-sum"><span>現金/存款小計</span><b id="sum-cash">NT$ 0</b></div>
   <div class="asset-list" id="list-cash"></div>
   <button class="btn-add" onclick="openModal('cash')">＋ 新增現金 / 存款</button>
+  <button class="export-btn" onclick="exportJSON()">⬇ 匯出 JSON 備份</button>
 </div>
+</div><!-- end main-app -->
 
 <nav class="nav">
-  <button class="nav-item active" id="nav-home" onclick="switchNav('home')">
-    <span class="nav-icon">🏠</span>總覽
-  </button>
-  <button class="nav-item" id="nav-add" onclick="openModal(currentTab)">
-    <span class="nav-icon">＋</span>新增
-  </button>
-  <button class="nav-item" id="nav-refresh" onclick="syncPrices()">
-    <span class="nav-icon">↻</span>更新
-  </button>
+  <button class="nav-item active" id="nav-home" onclick="switchNav('home')"><span class="nav-icon">🏠</span>總覽</button>
+  <button class="nav-item" id="nav-add" onclick="openModal(currentTab)"><span class="nav-icon">＋</span>新增</button>
+  <button class="nav-item" id="nav-refresh" onclick="syncPrices()"><span class="nav-icon">↻</span>更新</button>
 </nav>
 
-<!-- 新增/編輯資產 Modal -->
+<!-- 新增資產 Modal -->
 <div class="modal-bg" id="modal-add">
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modal-title">新增資產</h2>
     <div class="form-group">
       <label>代號</label>
-      <input type="text" id="inp-symbol" placeholder="台股: 2330  美股: AAPL  加密: BTC" autocapitalize="characters" autocorrect="off">
+      <input type="text" id="inp-symbol" placeholder="台股:2330  美股:AAPL  加密:BTC" autocapitalize="characters" autocorrect="off">
       <div class="hint" id="sym-hint"></div>
     </div>
     <div class="form-group">
@@ -307,14 +180,8 @@
       <input type="text" id="inp-name" placeholder="例如：台積電">
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>數量 / 股數</label>
-        <input type="number" id="inp-qty" placeholder="0" inputmode="decimal" step="any">
-      </div>
-      <div class="form-group">
-        <label>平均成本（單價）</label>
-        <input type="number" id="inp-cost" placeholder="0" inputmode="decimal" step="any">
-      </div>
+      <div class="form-group"><label>數量 / 股數</label><input type="number" id="inp-qty" placeholder="0" inputmode="decimal" step="any"></div>
+      <div class="form-group"><label>平均成本（單價）</label><input type="number" id="inp-cost" placeholder="0" inputmode="decimal" step="any"></div>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -325,10 +192,7 @@
           <option value="USDT">USDT</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>備註（選填）</label>
-        <input type="text" id="inp-note" placeholder="券商名稱">
-      </div>
+      <div class="form-group"><label>備註（選填）</label><input type="text" id="inp-note" placeholder="券商名稱"></div>
     </div>
     <div class="btn-row">
       <button class="btn-cancel" onclick="closeModal('modal-add')">取消</button>
@@ -337,265 +201,252 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const API = 'https://portfolio-backend-ophs.onrender.com';
 const COLORS = ['#378ADD','#D4537E','#EF9F27','#1D9E75'];
 const CAT_NAMES = ['台股/ETF','美股','加密貨幣','現金'];
 const TABS = ['stocks','us','crypto','cash'];
 
-let pieChart = null;
-let usdtwd = 32.5;
-let prices = {};
-let syncing = false;
+let pieChart = null, usdtwd = 32.5, prices = {}, syncing = false;
 let currentTab = 'stocks';
-let editIndex = -1;
+let saveTimer = null;
 
-// 從 localStorage 載入
-let pf = {
-  stocks: JSON.parse(localStorage.getItem('pf_stocks') || '[]'),
-  us:     JSON.parse(localStorage.getItem('pf_us')     || '[]'),
-  crypto: JSON.parse(localStorage.getItem('pf_crypto') || '[]'),
-  cash:   JSON.parse(localStorage.getItem('pf_cash')   || '[]'),
-};
+let pf = { stocks:[], us:[], crypto:[], cash:[] };
 
-// 第一次使用時的範例資料
-if (!pf.stocks.length && !pf.us.length && !pf.crypto.length && !pf.cash.length) {
-  pf.stocks = [{ symbol:'2330', name:'台積電',  qty:100,  cost:680,   currency:'TWD', note:'永豐證券' }];
-  pf.us     = [{ symbol:'AAPL', name:'Apple',   qty:10,   cost:175,   currency:'USD', note:'Firstrade' }];
-  pf.crypto = [{ symbol:'BTC',  name:'Bitcoin', qty:0.5,  cost:60000, currency:'USDT',note:'手動' }];
-  pf.cash   = [{ symbol:'TWD',  name:'台幣存款', qty:500000, cost:1,   currency:'TWD', note:'玉山銀行' }];
-  saveAll();
+// ── 啟動：從後端載入資料 ──────────────────────────────
+async function init() {
+  try {
+    const res = await fetch(API + '/portfolio');
+    if (res.ok) {
+      const data = await res.json();
+      pf.stocks = data.stocks || [];
+      pf.us     = data.us     || [];
+      pf.crypto = data.crypto || [];
+      pf.cash   = data.cash   || [];
+      setStatus('saved', `上次儲存 ${data.updated_at ? new Date(data.updated_at).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'}`);
+    }
+  } catch(e) {
+    setStatus('error', '後端離線，資料暫存本地');
+    // fallback 到 localStorage
+    pf.stocks = JSON.parse(localStorage.getItem('pf_stocks') || '[]');
+    pf.us     = JSON.parse(localStorage.getItem('pf_us')     || '[]');
+    pf.crypto = JSON.parse(localStorage.getItem('pf_crypto') || '[]');
+    pf.cash   = JSON.parse(localStorage.getItem('pf_cash')   || '[]');
+  }
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  renderAll();
+  syncPrices();
 }
 
-// iOS 加到主畫面提示
-if (/iPhone|iPad/.test(navigator.userAgent) && !navigator.standalone) {
-  document.getElementById('install-hint').style.display = 'block';
-}
-
-function saveAll() {
+// ── 儲存到後端（防抖，1秒後才送出） ────────────────────
+function scheduleSave() {
+  // 同時存 localStorage 作為備份
   ['stocks','us','crypto','cash'].forEach(k => localStorage.setItem('pf_'+k, JSON.stringify(pf[k])));
+
+  setStatus('saving', '儲存中...');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(API + '/portfolio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pf)
+      });
+      const data = await res.json();
+      setStatus('saved', '✓ 已儲存至雲端');
+      setTimeout(() => setStatus('', ''), 3000);
+    } catch(e) {
+      setStatus('error', '⚠ 雲端儲存失敗，已存本地');
+    }
+  }, 1000);
 }
 
-function toTWD(val, cur) {
-  return (cur === 'USD' || cur === 'USDT') ? val * usdtwd : val;
+function setStatus(type, msg) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'save-status ' + type;
 }
+
+// ── 匯出 JSON ──────────────────────────────────────────
+async function exportJSON() {
+  try {
+    const res = await fetch(API + '/portfolio/export');
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `portfolio_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('匯出失敗：' + e.message);
+  }
+}
+
+// ── 計算工具 ───────────────────────────────────────────
+function toTWD(val, cur) { return (cur==='USD'||cur==='USDT') ? val*usdtwd : val; }
 
 function getPrice(sym, cur) {
   const s = sym.toUpperCase();
-  const stableCoins = ['USDT','USDC','USD','BUSD','DAI'];
-  if (stableCoins.includes(s)) return 1;
-  if (cur === 'TWD') return prices[s + '.TW'] || prices[s] || 0;
+  if (['USDT','USDC','USD','BUSD','DAI'].includes(s)) return 1;
+  if (cur === 'TWD') return prices[s+'.TW'] || prices[s] || 0;
   return prices[s] || 0;
 }
 
 function calcAsset(a) {
-  const isCash = ['TWD','USD','USDT'].includes(a.symbol.toUpperCase()) && a.cost === 1;
+  const isCash = a.cost === 1 && ['TWD','USD','USDT'].includes(a.symbol.toUpperCase());
   const price = isCash ? 1 : getPrice(a.symbol, a.currency);
-  const current = price * a.qty;
-  const costTotal = a.cost * a.qty;
-  const pnl = current - costTotal;
-  const pct = costTotal > 0 ? pnl / costTotal * 100 : 0;
+  const current = price * a.qty, costTotal = a.cost * a.qty;
+  const pnl = current - costTotal, pct = costTotal > 0 ? pnl/costTotal*100 : 0;
   return { price, current, costTotal, pnl, pct, currentTWD: toTWD(current, a.currency), isCash };
 }
 
 const fmtTWD = n => 'NT$ ' + Math.round(Math.abs(n)).toLocaleString('zh-TW');
-const fmtUSD = n => '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+const fmtUSD = n => '$' + Math.abs(n).toLocaleString('en-US', {maximumFractionDigits:2});
 const sign   = n => n >= 0 ? '+' : '−';
 
+// ── 渲染 ───────────────────────────────────────────────
 function renderList(type) {
-  const list = pf[type];
-  const el = document.getElementById('list-' + type);
-  const sumEl = document.getElementById('sum-' + type);
-  const isUS = type === 'us', isCrypto = type === 'crypto';
-  const ic = { stocks:'ic-stock', us:'ic-us', crypto:'ic-crypto', cash:'ic-cash' }[type];
-
+  const list = pf[type], el = document.getElementById('list-'+type), sumEl = document.getElementById('sum-'+type);
+  const isUS = type==='us', isCrypto = type==='crypto';
+  const ic = {stocks:'ic-stock',us:'ic-us',crypto:'ic-crypto',cash:'ic-cash'}[type];
   let typeTotal = 0;
+
   if (!list.length) {
     el.innerHTML = '<div class="empty">尚未新增資產<br>點下方按鈕開始記錄</div>';
-    sumEl.textContent = isUS || isCrypto ? '$0' : 'NT$ 0';
+    sumEl.textContent = isUS||isCrypto ? '$0' : 'NT$ 0';
     return;
   }
 
   el.innerHTML = list.map((a, i) => {
-    const c = calcAsset(a);
-    typeTotal += c.current;
+    const c = calcAsset(a); typeTotal += c.current;
     const useForeign = isUS || isCrypto;
     const valStr   = useForeign ? fmtUSD(c.current) : fmtTWD(c.current);
     const priceStr = c.isCash ? '' : `<div class="asset-price">現價 ${useForeign ? fmtUSD(c.price) : fmtTWD(c.price)}</div>`;
     const pnlStr   = c.isCash ? '' :
-      `<div class="asset-pnl ${c.pnl >= 0 ? 'pos' : 'neg'}">${sign(c.pnl)}${useForeign ? fmtUSD(c.pnl) : fmtTWD(c.pnl)} (${sign(c.pct)}${Math.abs(c.pct).toFixed(2)}%)</div>`;
+      `<div class="asset-pnl ${c.pnl>=0?'pos':'neg'}">${sign(c.pnl)}${useForeign?fmtUSD(c.pnl):fmtTWD(c.pnl)} (${sign(c.pct)}${Math.abs(c.pct).toFixed(2)}%)</div>`;
     return `<div class="asset-item">
       <div class="asset-icon ${ic}">${a.symbol.substring(0,3).toUpperCase()}</div>
       <div class="asset-info">
-        <div class="asset-name">${a.symbol.toUpperCase()} <span style="font-weight:400;color:var(--text2)">${a.name || ''}</span></div>
-        <div class="asset-sub">${Number(a.qty).toLocaleString()} 單位 · 成本 ${useForeign ? fmtUSD(a.cost) : fmtTWD(a.cost)} · ${a.note || ''}</div>
+        <div class="asset-name">${a.symbol.toUpperCase()} <span style="font-weight:400;color:var(--text2)">${a.name||''}</span></div>
+        <div class="asset-sub">${Number(a.qty).toLocaleString()} 單位 · 成本 ${useForeign?fmtUSD(a.cost):fmtTWD(a.cost)} · ${a.note||''}</div>
       </div>
       <div class="asset-right">${priceStr}<div class="asset-val">${valStr}</div>${pnlStr}</div>
-      <button class="del-btn" onclick="removeAsset('${type}',${i})" aria-label="刪除">✕</button>
+      <button class="del-btn" onclick="removeAsset('${type}',${i})">✕</button>
     </div>`;
   }).join('');
-
-  sumEl.textContent = isUS || isCrypto ? fmtUSD(typeTotal) : fmtTWD(typeTotal);
+  sumEl.textContent = isUS||isCrypto ? fmtUSD(typeTotal) : fmtTWD(typeTotal);
 }
 
 function renderTotal() {
-  let total = 0, cost = 0;
-  ['stocks','us','crypto','cash'].forEach(t => {
-    pf[t].forEach(a => {
-      const c = calcAsset(a);
-      total += toTWD(c.current, a.currency);
-      cost  += toTWD(c.costTotal, a.currency);
-    });
-  });
-  const pnl = total - cost, pct = cost > 0 ? pnl / cost * 100 : 0;
-  document.getElementById('total-val').textContent = 'NT$ ' + Math.round(total).toLocaleString('zh-TW');
-  const pe = document.getElementById('total-pnl');
-  pe.textContent = (pnl >= 0 ? '獲利 ' : '虧損 ') + fmtTWD(pnl);
-  pe.className = pnl >= 0 ? 'pos' : 'neg';
-  const ce = document.getElementById('total-pct');
-  ce.textContent = sign(pct) + Math.abs(pct).toFixed(2) + '%';
-  ce.className = pnl >= 0 ? 'pos' : 'neg';
+  let total=0, cost=0;
+  ['stocks','us','crypto','cash'].forEach(t => pf[t].forEach(a => {
+    const c = calcAsset(a); total += toTWD(c.current,a.currency); cost += toTWD(c.costTotal,a.currency);
+  }));
+  const pnl=total-cost, pct=cost>0?pnl/cost*100:0;
+  document.getElementById('total-val').textContent = 'NT$ '+Math.round(total).toLocaleString('zh-TW');
+  const pe=document.getElementById('total-pnl'); pe.textContent=(pnl>=0?'獲利 ':'虧損 ')+fmtTWD(pnl); pe.className=pnl>=0?'pos':'neg';
+  const ce=document.getElementById('total-pct'); ce.textContent=sign(pct)+Math.abs(pct).toFixed(2)+'%'; ce.className=pnl>=0?'pos':'neg';
 
-  // Pie chart
-  const vals = ['stocks','us','crypto','cash'].map(k => {
-    let s = 0; pf[k].forEach(a => s += toTWD(calcAsset(a).current, a.currency)); return s;
-  });
-  document.getElementById('pie-legend').innerHTML = CAT_NAMES.map((n, i) =>
-    `<span style="display:flex;align-items:center;gap:4px">
-      <span style="width:9px;height:9px;border-radius:2px;background:${COLORS[i]}"></span>
-      ${n} ${total > 0 ? Math.round(vals[i] / total * 100) : 0}%
-    </span>`).join('');
-  const ctx = document.getElementById('pie');
-  if (pieChart) pieChart.destroy();
-  pieChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels: CAT_NAMES, datasets: [{ data: vals, backgroundColor: COLORS, borderWidth: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: d => ' NT$ ' + Math.round(d.raw).toLocaleString('zh-TW') }}},
-      cutout: '68%' }
-  });
+  const vals = ['stocks','us','crypto','cash'].map(k=>{let s=0;pf[k].forEach(a=>s+=toTWD(calcAsset(a).current,a.currency));return s;});
+  document.getElementById('pie-legend').innerHTML = CAT_NAMES.map((n,i)=>
+    `<span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:${COLORS[i]}"></span>${n} ${total>0?Math.round(vals[i]/total*100):0}%</span>`).join('');
+  const ctx=document.getElementById('pie');
+  if(pieChart) pieChart.destroy();
+  pieChart=new Chart(ctx,{type:'doughnut',data:{labels:CAT_NAMES,datasets:[{data:vals,backgroundColor:COLORS,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:d=>' NT$ '+Math.round(d.raw).toLocaleString('zh-TW')}}},cutout:'68%'}});
 }
 
-function renderAll() {
-  ['stocks','us','crypto','cash'].forEach(t => renderList(t));
-  renderTotal();
-}
+function renderAll() { TABS.forEach(t=>renderList(t)); renderTotal(); }
 
+// ── 報價更新 ───────────────────────────────────────────
 async function syncPrices() {
-  if (syncing) return;
-  syncing = true;
-  const btn = document.getElementById('sync-btn');
-  document.getElementById('sync-icon').className = 'spin';
-  document.getElementById('sync-icon').textContent = '↻';
-  document.getElementById('sync-label').textContent = '更新中';
-  btn.disabled = true;
-  document.getElementById('err-bar').style.display = 'none';
-
+  if(syncing) return; syncing=true;
+  const btn=document.getElementById('sync-btn');
+  document.getElementById('sync-icon').className='spin';
+  document.getElementById('sync-label').textContent='更新中';
+  btn.disabled=true;
+  document.getElementById('err-bar').style.display='none';
   try {
-    // 匯率
-    const fx = await fetch(API + '/fx').then(r => r.json());
-    usdtwd = fx.USDTWD || 32.5;
-    document.getElementById('fx-rate').textContent = usdtwd.toFixed(2);
+    const fx=await fetch(API+'/fx').then(r=>r.json());
+    usdtwd=fx.USDTWD||32.5;
+    document.getElementById('fx-rate').textContent=usdtwd.toFixed(2);
 
-    // 台股
-    const twSyms = pf.stocks.map(a => a.symbol + '.TW').join(',');
-    if (twSyms) {
-      const r = await fetch(`${API}/price?symbols=${twSyms}`).then(r => r.json());
-      Object.entries(r.prices || {}).forEach(([k, v]) => { prices[k] = v.price; });
-    }
+    const twSyms=pf.stocks.map(a=>a.symbol+'.TW').join(',');
+    if(twSyms){const r=await fetch(`${API}/price?symbols=${twSyms}`).then(r=>r.json());Object.entries(r.prices||{}).forEach(([k,v])=>prices[k]=v.price);}
 
-    // 美股
-    const usSyms = pf.us.map(a => a.symbol).join(',');
-    if (usSyms) {
-      const r = await fetch(`${API}/price?symbols=${usSyms}`).then(r => r.json());
-      Object.entries(r.prices || {}).forEach(([k, v]) => { prices[k] = v.price; });
-    }
+    const usSyms=pf.us.map(a=>a.symbol).join(',');
+    if(usSyms){const r=await fetch(`${API}/price?symbols=${usSyms}`).then(r=>r.json());Object.entries(r.prices||{}).forEach(([k,v])=>prices[k]=v.price);}
 
-    // 加密貨幣
-    const cSyms = pf.crypto.map(a => a.symbol).filter(s => !['USDT','USD','USDC'].includes(s.toUpperCase())).join(',');
-    if (cSyms) {
-      const r = await fetch(`${API}/crypto/prices?symbols=${cSyms}`).then(r => r.json());
-      Object.entries(r.prices || {}).forEach(([k, v]) => { prices[k] = v.price_usd; });
-    }
+    const cSyms=pf.crypto.map(a=>a.symbol).filter(s=>!['USDT','USD','USDC'].includes(s.toUpperCase())).join(',');
+    if(cSyms){const r=await fetch(`${API}/crypto/prices?symbols=${cSyms}`).then(r=>r.json());Object.entries(r.prices||{}).forEach(([k,v])=>prices[k]=v.price_usd);}
 
-    document.getElementById('last-time').textContent =
-      new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('last-time').textContent=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
     renderAll();
-  } catch (e) {
-    const eb = document.getElementById('err-bar');
-    eb.style.display = 'block';
-    eb.textContent = '⚠️ 後端連線失敗，Render 免費方案冷啟動需等約 30 秒，請稍後再試。';
+  } catch(e) {
+    const eb=document.getElementById('err-bar');eb.style.display='block';
+    eb.textContent='⚠️ 後端連線失敗，Render 冷啟動約需 30 秒，請稍後再試。';
     renderAll();
   }
-
-  syncing = false;
-  btn.disabled = false;
-  document.getElementById('sync-icon').className = '';
-  document.getElementById('sync-icon').textContent = '↻';
-  document.getElementById('sync-label').textContent = '更新報價';
+  syncing=false;btn.disabled=false;
+  document.getElementById('sync-icon').className='';
+  document.getElementById('sync-icon').textContent='↻';
+  document.getElementById('sync-label').textContent='更新';
 }
 
+// ── Modal ──────────────────────────────────────────────
 function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab').forEach((b, i) => b.classList.toggle('active', TABS[i] === tab));
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.getElementById('sec-' + tab).classList.add('active');
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===tab));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
 }
 
 function openModal(type) {
-  currentTab = type;
-  editIndex = -1;
-  const titles = { stocks:'新增台股/ETF', us:'新增美股', crypto:'新增加密幣', cash:'新增現金/存款' };
-  const hints  = { stocks:'台股代號，例如：2330、0050', us:'美股代號，例如：AAPL、NVDA', crypto:'幣種代號，例如：BTC、ETH、OKB', cash:'填 TWD / USD / USDT' };
-  document.getElementById('modal-title').textContent = titles[type];
-  document.getElementById('sym-hint').textContent = hints[type];
-  document.getElementById('inp-currency').value = type === 'us' ? 'USD' : type === 'crypto' ? 'USDT' : 'TWD';
-  ['inp-symbol','inp-name','inp-qty','inp-cost','inp-note'].forEach(id => document.getElementById(id).value = '');
+  currentTab=type;
+  const titles={stocks:'新增台股/ETF',us:'新增美股',crypto:'新增加密幣',cash:'新增現金/存款'};
+  const hints={stocks:'台股代號，例如：2330、0050',us:'美股代號，例如：AAPL、VOO',crypto:'幣種代號，例如：BTC、ETH、OKB',cash:'填 TWD / USD / USDT'};
+  document.getElementById('modal-title').textContent=titles[type];
+  document.getElementById('sym-hint').textContent=hints[type];
+  document.getElementById('inp-currency').value=type==='us'?'USD':type==='crypto'?'USDT':'TWD';
+  ['inp-symbol','inp-name','inp-qty','inp-cost','inp-note'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('modal-add').classList.add('open');
-  setTimeout(() => document.getElementById('inp-symbol').focus(), 300);
+  setTimeout(()=>document.getElementById('inp-symbol').focus(),300);
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 function saveAsset() {
-  const sym      = document.getElementById('inp-symbol').value.trim().toUpperCase();
-  const name     = document.getElementById('inp-name').value.trim();
-  const qty      = parseFloat(document.getElementById('inp-qty').value) || 0;
-  const cost     = parseFloat(document.getElementById('inp-cost').value) || 0;
-  const currency = document.getElementById('inp-currency').value;
-  const note     = document.getElementById('inp-note').value.trim();
-
-  if (!sym) { alert('請輸入代號'); return; }
-  if (qty <= 0) { alert('請輸入正確的數量'); return; }
-
-  const asset = { symbol: sym, name, qty, cost, currency, note };
-  pf[currentTab].push(asset);
-  saveAll();
+  const sym=document.getElementById('inp-symbol').value.trim().toUpperCase();
+  const name=document.getElementById('inp-name').value.trim();
+  const qty=parseFloat(document.getElementById('inp-qty').value)||0;
+  const cost=parseFloat(document.getElementById('inp-cost').value)||0;
+  const currency=document.getElementById('inp-currency').value;
+  const note=document.getElementById('inp-note').value.trim();
+  if(!sym){alert('請輸入代號');return;}
+  if(qty<=0){alert('請輸入正確的數量');return;}
+  pf[currentTab].push({symbol:sym,name,qty,cost,currency,note});
+  scheduleSave();
   closeModal('modal-add');
+  renderAll();
   syncPrices();
 }
 
-function removeAsset(type, idx) {
-  const a = pf[type][idx];
-  if (!confirm(`確定刪除「${a.symbol}」？`)) return;
-  pf[type].splice(idx, 1);
-  saveAll();
+function removeAsset(type,idx) {
+  const a=pf[type][idx];
+  if(!confirm(`確定刪除「${a.symbol}」？`))return;
+  pf[type].splice(idx,1);
+  scheduleSave();
   renderAll();
 }
 
-function switchNav(p) {
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('nav-' + p)?.classList.add('active');
-}
+function switchNav(p){document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+p)?.classList.add('active');}
 
-document.getElementById('modal-add').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-add')) closeModal('modal-add');
-});
+document.getElementById('modal-add').addEventListener('click',e=>{if(e.target===document.getElementById('modal-add'))closeModal('modal-add');});
 
-renderAll();
-syncPrices();
+init();
 </script>
 </body>
 </html>
