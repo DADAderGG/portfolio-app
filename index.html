@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="投資組合">
+<meta name="theme-color" content="#ffffff">
+<title>投資組合</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f7; --bg3: #ebebeb;
+    --text: #1c1c1e; --text2: #6e6e73; --text3: #aeaeb2;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --pos: #1D9E75; --neg: #D85A30;
+    --blue: #378ADD; --pink: #D4537E; --amber: #EF9F27; --green: #1D9E75;
+    --info-bg: #E6F1FB; --info: #185FA5;
+    --radius: 12px; --radius-sm: 8px;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bot: env(safe-area-inset-bottom);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+      --text: #ffffff; --text2: #aeaeb2; --text3: #6e6e73;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --info-bg: #0c447c; --info: #85b7eb;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+         background: var(--bg); color: var(--text);
+         padding-top: calc(var(--safe-top) + 0px);
+         padding-bottom: calc(var(--safe-bot) + 60px);
+         overflow-x: hidden; }
+  /* Header */
+  .header { padding: 16px 16px 10px; border-bottom: 0.5px solid var(--border);
+             display: flex; align-items: center; justify-content: space-between;
+             position: sticky; top: 0; background: var(--bg); z-index: 10;
+             backdrop-filter: blur(10px); }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .sync-btn { display: flex; align-items: center; gap: 5px; padding: 7px 13px;
+              border: 0.5px solid var(--border2); border-radius: 20px;
+              background: transparent; color: var(--text2); font-size: 13px; cursor: pointer; }
+  .spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* Total */
+  .total-card { margin: 14px 16px; background: var(--bg2);
+                border-radius: var(--radius); padding: 18px; }
+  .total-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .total-amount { font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-bottom: 6px; }
+  .total-row { display: flex; gap: 14px; font-size: 13px; }
+  .pos { color: var(--pos); } .neg { color: var(--neg); }
+  /* FX bar */
+  .fx-bar { margin: 0 16px 12px; padding: 8px 12px; background: var(--bg2);
+             border-radius: var(--radius-sm); display: flex; gap: 4px;
+             font-size: 12px; color: var(--text2); align-items: center; flex-wrap: wrap; }
+  .fx-bar b { color: var(--text); }
+  /* Chart */
+  .chart-card { margin: 0 16px 14px; background: var(--bg);
+                border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .chart-card h3 { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+  /* Tabs */
+  .tabs { display: flex; margin: 0 16px 10px; background: var(--bg2);
+          border-radius: var(--radius-sm); padding: 3px; gap: 2px; }
+  .tab { flex: 1; padding: 7px 4px; font-size: 12px; font-weight: 500;
+         border: none; background: transparent; color: var(--text2);
+         border-radius: 6px; cursor: pointer; }
+  .tab.active { background: var(--bg); color: var(--text);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .section { display: none; } .section.active { display: block; }
+  /* Asset list */
+  .asset-list { margin: 0 16px; }
+  .asset-item { display: flex; align-items: center; gap: 11px;
+                padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+  .asset-item:last-child { border-bottom: none; }
+  .asset-icon { width: 40px; height: 40px; border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .ic-stock { background: #E6F1FB; color: #185FA5; }
+  .ic-us    { background: #FBEAF0; color: #993556; }
+  .ic-crypto{ background: #FAEEDA; color: #854F0B; }
+  .ic-cash  { background: #EAF3DE; color: #3B6D11; }
+  .asset-info { flex: 1; min-width: 0; }
+  .asset-name { font-size: 14px; font-weight: 600; }
+  .asset-sub  { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .asset-right { text-align: right; flex-shrink: 0; }
+  .asset-price { font-size: 11px; color: var(--text2); }
+  .asset-val   { font-size: 14px; font-weight: 600; }
+  .asset-pnl   { font-size: 11px; margin-top: 1px; }
+  .del-btn { border: none; background: transparent; color: var(--text3);
+             font-size: 16px; padding: 6px; cursor: pointer; margin-left: 2px; }
+  /* Add button */
+  .btn-add { display: flex; align-items: center; gap: 6px; margin: 10px 16px;
+             padding: 11px 16px; background: var(--bg2); border: 0.5px solid var(--border);
+             border-radius: var(--radius-sm); color: var(--text2); font-size: 13px;
+             cursor: pointer; width: calc(100% - 32px); justify-content: center; }
+  /* API box */
+  .api-box { margin: 0 16px 14px; background: var(--bg2);
+             border-radius: var(--radius); padding: 14px; }
+  .api-box h3 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .api-box p  { font-size: 11px; color: var(--text2); margin-bottom: 10px; }
+  .api-status { display: flex; align-items: center; gap: 7px; font-size: 12px; margin-bottom: 5px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .dot.ok { background: var(--pos); } .dot.err { background: var(--neg); }
+  /* Error bar */
+  .err-bar { margin: 0 16px 10px; padding: 10px 12px; background: #fcebeb;
+             border-radius: var(--radius-sm); font-size: 12px; color: #a32d2d; display: none; }
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+              display: none; align-items: flex-end; justify-content: center; z-index: 200; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg); border-radius: 20px 20px 0 0;
+           padding: 20px 16px calc(var(--safe-bot) + 24px);
+           width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .form-group { margin-bottom: 13px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 11px 13px; border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); background: var(--bg2); color: var(--text);
+    font-size: 15px; -webkit-appearance: none; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-primary { flex: 1; padding: 13px; background: var(--text); color: var(--bg);
+                 border: none; border-radius: var(--radius-sm);
+                 font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn-cancel { padding: 13px 18px; background: transparent; border: 0.5px solid var(--border2);
+                border-radius: var(--radius-sm); font-size: 15px; cursor: pointer; color: var(--text2); }
+  .tip { margin-bottom: 14px; padding: 10px 12px; background: var(--info-bg);
+         border-radius: var(--radius-sm); font-size: 12px; color: var(--info); }
+  /* Nav */
+  .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg);
+         border-top: 0.5px solid var(--border); display: flex;
+         padding: 8px 0 calc(var(--safe-bot) + 4px); z-index: 10; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center;
+              gap: 3px; padding: 4px 0; border: none; background: transparent;
+              color: var(--text3); font-size: 10px; font-weight: 500; cursor: pointer; }
+  .nav-item.active { color: var(--blue); }
+  .nav-item i { font-size: 22px; }
+  /* Install hint */
+  .install-hint { margin: 0 16px 14px; padding: 12px; background: var(--info-bg);
+                  border-radius: var(--radius-sm); font-size: 12px; color: var(--info);
+                  display: none; line-height: 1.5; }
+  .empty { text-align: center; padding: 30px 16px; color: var(--text2); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 投資組合</h1>
+  <button class="sync-btn" id="sync-btn" onclick="syncAll()">
+    <i class="fa-solid fa-rotate-right" id="sync-icon"></i>
+    <span id="sync-label">同步</span>
+  </button>
+</div>
+
+<!-- 加到主畫面提示（Safari 才顯示） -->
+<div class="install-hint" id="install-hint">
+  💡 在 Safari 點下方 <strong>分享</strong> 按鈕 → <strong>加入主畫面</strong>，即可像 App 一樣使用！
+</div>
+
+<div class="total-card">
+  <div class="total-label">總資產（TWD）</div>
+  <div class="total-amount" id="total-val">計算中...</div>
+  <div class="total-row">
+    <span id="total-pnl">—</span>
+    <span id="total-pct">—</span>
+  </div>
+</div>
+
+<div class="fx-bar">
+  💱 USD/TWD <b id="fx-rate">—</b>&nbsp;&nbsp;
+  🕐 <b id="last-time">—</b>
+</div>
+
+<div class="err-bar" id="err-bar"></div>
+
+<div class="chart-card">
+  <h3>資產配置</h3>
+  <div style="position:relative;height:160px">
+    <canvas id="pie" role="img" aria-label="資產配置圓餅圖">台股、美股、加密貨幣、現金比例</canvas>
+  </div>
+  <div id="pie-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:12px;color:var(--text2)"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('stocks')">台股</button>
+  <button class="tab" onclick="switchTab('us')">美股</button>
+  <button class="tab" onclick="switchTab('crypto')">加密幣</button>
+  <button class="tab" onclick="switchTab('cash')">現金</button>
+</div>
+
+<div id="sec-stocks" class="section active">
+  <div class="asset-list" id="list-stocks"></div>
+  <button class="btn-add" onclick="openModal('stocks')">＋ 新增台股 / ETF</button>
+</div>
+<div id="sec-us" class="section">
+  <div class="asset-list" id="list-us"></div>
+  <button class="btn-add" onclick="openModal('us')">＋ 新增美股（Firstrade）</button>
+</div>
+<div id="sec-crypto" class="section">
+  <div class="api-box">
+    <h3>交易所 API 同步</h3>
+    <p>設定只讀 API Key，自動抓取持倉餘額</p>
+    <div class="api-status"><div class="dot" id="d-binance"></div><span>Binance：<b id="s-binance">未設定</b></span></div>
+    <div class="api-status"><div class="dot" id="d-okx"></div><span>OKX：<b id="s-okx">未設定</b></span></div>
+    <button class="btn-add" style="margin:8px 0 0" onclick="openApiModal()">⚙️ 設定 API Key</button>
+  </div>
+  <div class="asset-list" id="list-crypto"></div>
+  <button class="btn-add" onclick="openModal('crypto')">＋ 手動新增加密幣</button>
+</div>
+<div id="sec-cash" class="section">
+  <div class="asset-list" id="list-cash"></div>
+  <button class="btn-add" onclick="openModal('cash')">＋ 新增現金 / 存款</button>
+</div>
+
+<nav class="nav">
+  <button class="nav-item active" id="nav-home" onclick="switchNav('home')">
+    <i class="fa-solid fa-house"></i>總覽
+  </button>
+  <button class="nav-item" id="nav-link" onclick="openApiModal()">
+    <i class="fa-solid fa-link"></i>連接
+  </button>
+  <button class="nav-item" id="nav-analyze" onclick="alert('分析功能：請搭配 Claude 使用，把你的持倉截圖傳給 Claude 詢問建議！')">
+    <i class="fa-solid fa-chart-pie"></i>分析
+  </button>
+</nav>
+
+<!-- 新增資產 Modal -->
+<div class="modal-bg" id="modal-add">
+  <div class="modal">
+    <h2 id="modal-title">新增資產</h2>
+    <div class="form-group">
+      <label>代號</label>
+      <input type="text" id="inp-symbol" placeholder="台股: 2330  美股: AAPL  加密: BTC" autocapitalize="characters">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>數量 / 股數</label><input type="number" id="inp-qty" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label>平均成本（單價）</label><input type="number" id="inp-cost" placeholder="0" inputmode="decimal"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>幣別</label>
+        <select id="inp-currency">
+          <option value="TWD">TWD 台幣</option>
+          <option value="USD">USD 美元</option>
+          <option value="USDT">USDT</option>
+        </select>
+      </div>
+      <div class="form-group"><label>備註（選填）</label><input type="text" id="inp-note" placeholder="券商名稱"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeModal('modal-add')">取消</button>
+      <button class="btn-primary" onclick="saveAsset()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal-bg" id="modal-api">
+  <div class="modal">
+    <h2>設定交易所 API</h2>
+    <div class="tip">🔒 請使用<strong>只讀權限</strong>的 API Key，無法提幣或交易，資金完全安全。Key 只存在你的手機本地。</div>
+    <div class="form-group"><label>Binance API Key</label><input type="text" id="inp-bk" placeholder="貼上 API Key" autocomplete="off"></div>
+    <div class="form-group"><label>Binance Secret Key</label><input type="password" id="inp-bs" placeholder="貼上 Secret Key"></div>
+    <div style="height:0.5px;background:var(--border);margin:12px 0"></div>
+    <div class="form-group"><label>OKX API Key</label><input type="text" id="inp-ok" placeholder="貼上 API Key" autocomplete="off"></div>
+    <div class="form-group"><label>OKX Secret Key</label><input type="password" id="inp-os" placeholder="貼上 Secret Key"></div>
+    <div class="form-group"><label>OKX Passphrase</label><input type="password" id="inp-op" placeholder="貼上 Passphrase"></div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeModal('modal-api')">取消</button>
+      <button class="btn-primary" onclick="saveApiKeys()">儲存並同步</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://portfolio-backend-ophs.onrender.com';
+const COLORS = ['#378ADD','#D4537E','#EF9F27','#1D9E75'];
+const CAT_NAMES = ['台股/ETF','美股','加密貨幣','現金'];
+
+let pieChart = null, usdtwd = 32.5, prices = {}, syncing = false;
+let currentTab = 'stocks', currentModal = '';
+
+let pf = {
+  stocks: JSON.parse(localStorage.getItem('pf_stocks')||'[]'),
+  us:     JSON.parse(localStorage.getItem('pf_us')||'[]'),
+  crypto: JSON.parse(localStorage.getItem('pf_crypto')||'[]'),
+  cash:   JSON.parse(localStorage.getItem('pf_cash')||'[]'),
+  apis:   JSON.parse(localStorage.getItem('pf_apis')||'{}'),
+};
+
+// 範例資料
+if(!pf.stocks.length && !pf.us.length && !pf.crypto.length && !pf.cash.length){
+  pf.stocks=[{symbol:'2330',qty:100,cost:680,currency:'TWD',note:'永豐證券'}];
+  pf.us=[{symbol:'AAPL',qty:10,cost:175,currency:'USD',note:'Firstrade'}];
+  pf.crypto=[{symbol:'BTC',qty:0.5,cost:60000,currency:'USDT',note:'手動'}];
+  pf.cash=[{symbol:'TWD',qty:500000,cost:1,currency:'TWD',note:'玉山銀行'}];
+  saveAll();
+}
+
+// 顯示「加到主畫面」提示（僅 iOS Safari）
+if(navigator.userAgent.match(/iPhone|iPad/) && !navigator.standalone){
+  document.getElementById('install-hint').style.display='block';
+}
+
+function saveAll(){
+  ['stocks','us','crypto','cash','apis'].forEach(k=>localStorage.setItem('pf_'+k,JSON.stringify(pf[k])));
+}
+
+function toTWD(val,cur){ return (cur==='USD'||cur==='USDT') ? val*usdtwd : val; }
+
+function getPrice(sym,cur){
+  const s=sym.toUpperCase();
+  if(cur==='TWD') return prices[s+'.TW']||prices[s]||0;
+  if(s==='USDT'||s==='USD') return 1;
+  return prices[s]||0;
+}
+
+function calcAsset(a){
+  const isCash=['TWD','USD','USDT'].includes(a.symbol.toUpperCase());
+  const price=isCash?a.cost:getPrice(a.symbol,a.currency);
+  const current=price*a.qty, costTotal=a.cost*a.qty;
+  const pnl=current-costTotal, pct=costTotal>0?pnl/costTotal*100:0;
+  return {price,current,costTotal,pnl,pct,currentTWD:toTWD(current,a.currency),isCash};
+}
+
+const fmtTWD=n=>'NT$ '+Math.round(Math.abs(n)).toLocaleString('zh-TW');
+const fmtUSD=n=>'$'+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:2});
+const sign=n=>n>=0?'+':'−';
+
+function renderList(type){
+  const list=pf[type], el=document.getElementById('list-'+type);
+  if(!list.length){el.innerHTML='<div class="empty">尚未新增資產，點下方按鈕新增</div>';return;}
+  const isUS=type==='us', isCrypto=type==='crypto';
+  const ic={stocks:'ic-stock',us:'ic-us',crypto:'ic-crypto',cash:'ic-cash'}[type];
+  el.innerHTML=list.map((a,i)=>{
+    const c=calcAsset(a);
+    const useForeign=isUS||isCrypto;
+    const valStr=useForeign?fmtUSD(c.current):fmtTWD(c.current);
+    const pnlStr=c.isCash?'':
+      `<div class="asset-pnl ${c.pnl>=0?'pos':'neg'}">${sign(c.pnl)}${useForeign?fmtUSD(c.pnl):fmtTWD(c.pnl)} (${sign(c.pct)}${Math.abs(c.pct).toFixed(2)}%)</div>`;
+    const priceStr=c.isCash?'':
+      `<div class="asset-price">現價 ${useForeign?fmtUSD(c.price):fmtTWD(c.price)}</div>`;
+    return `<div class="asset-item">
+      <div class="asset-icon ${ic}">${a.symbol.substring(0,3).toUpperCase()}</div>
+      <div class="asset-info">
+        <div class="asset-name">${a.symbol.toUpperCase()}</div>
+        <div class="asset-sub">${a.qty.toLocaleString()} 單位 · ${a.note||''}</div>
+      </div>
+      <div class="asset-right">${priceStr}<div class="asset-val">${valStr}</div>${pnlStr}</div>
+      <button class="del-btn" onclick="removeAsset('${type}',${i})" aria-label="刪除">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderTotal(){
+  let total=0,cost=0;
+  ['stocks','us','crypto','cash'].forEach(t=>pf[t].forEach(a=>{
+    const c=calcAsset(a);total+=toTWD(c.current,a.currency);cost+=toTWD(c.costTotal,a.currency);
+  }));
+  const pnl=total-cost,pct=cost>0?pnl/cost*100:0;
+  document.getElementById('total-val').textContent='NT$ '+Math.round(total).toLocaleString('zh-TW');
+  const pe=document.getElementById('total-pnl');
+  pe.textContent=(pnl>=0?'獲利 ':'虧損 ')+fmtTWD(pnl); pe.className=pnl>=0?'pos':'neg';
+  const ce=document.getElementById('total-pct');
+  ce.textContent=sign(pct)+Math.abs(pct).toFixed(2)+'%'; ce.className=pnl>=0?'pos':'neg';
+
+  // Pie
+  const vals=['stocks','us','crypto','cash'].map(k=>{let s=0;pf[k].forEach(a=>s+=toTWD(calcAsset(a).current,a.currency));return s;});
+  document.getElementById('pie-legend').innerHTML=
+    CAT_NAMES.map((n,i)=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:${COLORS[i]}"></span>${n} ${total>0?Math.round(vals[i]/total*100):0}%</span>`).join('');
+  const ctx=document.getElementById('pie');
+  if(pieChart) pieChart.destroy();
+  pieChart=new Chart(ctx,{type:'doughnut',data:{labels:CAT_NAMES,datasets:[{data:vals,backgroundColor:COLORS,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:d=>' NT$ '+Math.round(d.raw).toLocaleString('zh-TW')}}},cutout:'68%'}});
+}
+
+function renderAll(){ ['stocks','us','crypto','cash'].forEach(t=>renderList(t)); renderTotal(); renderApiStatus(); }
+
+async function syncAll(){
+  if(syncing) return; syncing=true;
+  const btn=document.getElementById('sync-btn');
+  document.getElementById('sync-icon').className='fa-solid fa-rotate-right spin';
+  document.getElementById('sync-label').textContent='同步中';
+  btn.disabled=true; document.getElementById('err-bar').style.display='none';
+  try{
+    const fx=await fetch(API+'/fx').then(r=>r.json());
+    usdtwd=fx.USDTWD||32.5;
+    document.getElementById('fx-rate').textContent=usdtwd.toFixed(2);
+
+    const twSyms=pf.stocks.map(a=>a.symbol+'.TW').join(',');
+    if(twSyms){const r=await fetch(`${API}/price?symbols=${twSyms}`).then(r=>r.json());Object.entries(r.prices||{}).forEach(([k,v])=>prices[k]=v.price);}
+
+    const usSyms=pf.us.map(a=>a.symbol).join(',');
+    if(usSyms){const r=await fetch(`${API}/price?symbols=${usSyms}`).then(r=>r.json());Object.entries(r.prices||{}).forEach(([k,v])=>prices[k]=v.price);}
+
+    const cSyms=pf.crypto.map(a=>a.symbol).filter(s=>s!=='USDT'&&s!=='USD').join(',');
+    if(cSyms){const r=await fetch(`${API}/crypto/prices?symbols=${cSyms}`).then(r=>r.json());Object.entries(r.prices||{}).forEach(([k,v])=>prices[k]=v.price_usd);}
+
+    const apis=pf.apis;
+    if(apis.binanceKey&&apis.binanceSecret){
+      try{
+        const r=await fetch(`${API}/binance/balances?api_key=${encodeURIComponent(apis.binanceKey)}&api_secret=${encodeURIComponent(apis.binanceSecret)}`).then(r=>r.json());
+        if(r.balances){r.balances.forEach(b=>{const e=pf.crypto.find(a=>a.symbol.toUpperCase()===b.asset);if(e)e.qty=b.total;else if(b.total>0.0001)pf.crypto.push({symbol:b.asset,qty:b.total,cost:0,currency:'USDT',note:'Binance 自動'});});
+          document.getElementById('d-binance').className='dot ok';document.getElementById('s-binance').textContent='已同步';saveAll();}
+      }catch(e){document.getElementById('d-binance').className='dot err';document.getElementById('s-binance').textContent='錯誤';}
+    }
+    if(apis.okxKey&&apis.okxSecret&&apis.okxPass){
+      try{
+        const r=await fetch(`${API}/okx/balances?api_key=${encodeURIComponent(apis.okxKey)}&api_secret=${encodeURIComponent(apis.okxSecret)}&passphrase=${encodeURIComponent(apis.okxPass)}`).then(r=>r.json());
+        if(r.balances){r.balances.forEach(b=>{const e=pf.crypto.find(a=>a.symbol.toUpperCase()===b.asset);if(e)e.qty=b.total;else if(b.total>0.0001)pf.crypto.push({symbol:b.asset,qty:b.total,cost:0,currency:'USDT',note:'OKX 自動'});});
+          document.getElementById('d-okx').className='dot ok';document.getElementById('s-okx').textContent='已同步';saveAll();}
+      }catch(e){document.getElementById('d-okx').className='dot err';document.getElementById('s-okx').textContent='錯誤';}
+    }
+
+    document.getElementById('last-time').textContent=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+    renderAll();
+  }catch(e){
+    const eb=document.getElementById('err-bar');eb.style.display='block';
+    eb.textContent='⚠️ 無法連線後端，Render 免費方案首次請求需等約 30 秒後重試。';
+  }
+  syncing=false;btn.disabled=false;
+  document.getElementById('sync-icon').className='fa-solid fa-rotate-right';
+  document.getElementById('sync-label').textContent='同步';
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['stocks','us','crypto','cash'][i]===tab));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+}
+
+function openModal(type){
+  currentModal=type;
+  document.getElementById('modal-title').textContent={stocks:'新增台股/ETF',us:'新增美股',crypto:'新增加密幣',cash:'新增現金'}[type];
+  document.getElementById('inp-currency').value=type==='us'?'USD':type==='crypto'?'USDT':'TWD';
+  ['inp-symbol','inp-qty','inp-cost','inp-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-add').classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function saveAsset(){
+  const sym=document.getElementById('inp-symbol').value.trim().toUpperCase();
+  const qty=parseFloat(document.getElementById('inp-qty').value)||0;
+  const cost=parseFloat(document.getElementById('inp-cost').value)||0;
+  const currency=document.getElementById('inp-currency').value;
+  const note=document.getElementById('inp-note').value.trim();
+  if(!sym||qty<=0){alert('請填寫代號和數量');return;}
+  pf[currentModal].push({symbol:sym,qty,cost,currency,note});
+  saveAll();closeModal('modal-add');syncAll();
+}
+
+function removeAsset(type,idx){if(!confirm('確定刪除？'))return;pf[type].splice(idx,1);saveAll();renderAll();}
+
+function openApiModal(){
+  const a=pf.apis;
+  if(a.binanceKey)document.getElementById('inp-bk').value=a.binanceKey;
+  if(a.okxKey)document.getElementById('inp-ok').value=a.okxKey;
+  document.getElementById('modal-api').classList.add('open');
+}
+function saveApiKeys(){
+  pf.apis={binanceKey:document.getElementById('inp-bk').value.trim(),binanceSecret:document.getElementById('inp-bs').value.trim(),okxKey:document.getElementById('inp-ok').value.trim(),okxSecret:document.getElementById('inp-os').value.trim(),okxPass:document.getElementById('inp-op').value.trim()};
+  saveAll();closeModal('modal-api');syncAll();
+}
+function renderApiStatus(){
+  const a=pf.apis;
+  if(!a.binanceKey){document.getElementById('d-binance').className='dot';document.getElementById('s-binance').textContent='未設定';}
+  if(!a.okxKey){document.getElementById('d-okx').className='dot';document.getElementById('s-okx').textContent='未設定';}
+}
+function switchNav(p){document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+p)?.classList.add('active');}
+
+document.getElementById('modal-add').addEventListener('click',e=>{if(e.target===document.getElementById('modal-add'))closeModal('modal-add');});
+document.getElementById('modal-api').addEventListener('click',e=>{if(e.target===document.getElementById('modal-api'))closeModal('modal-api');});
+
+renderAll();
+syncAll();
+</script>
+</body>
+</html>
